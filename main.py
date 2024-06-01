@@ -1,15 +1,32 @@
-import requests
+import network
+import socket
+from picozero import pico_temp_sensor, pico_led
+from machine import Pin, WDT
+import urequests
 import time
-from datetime import datetime, timedelta
+import datetime
+
+
+ssid = 'VandelayIndustries'
+password = 'SummerOfGeorge'
+
+def connect(indicator):
+    count = 0
+    wlan = network.WLAN(network.STA_IF)
+    wlan.active(True)
+    wlan.connect(ssid, password)
+    while wlan.isconnected() == False: # while trying to connect to Wi-Fi, flash the light
+        print('Waiting for connection...')
+        time.sleep(1)
+        indicator.value(1)
+    indicator.value(0)
+    print(wlan.ifconfig())  
 
 def fetch_metar(airport):
     url = "https://aviationweather.gov/api/data/metar?ids=" + airport + "&format=raw&taf=false"
-    response = requests.get(url)
-    if response.status_code == 200:
-        return response.text
-    else:
-        print("Failed to fetch METAR data.")
-        return ""
+    response = urequests.get(url)
+    print(response.text)
+    return response.text
 
 def check_lightning(metar_data):
     lightning_patterns = ["TS", "LTG"]
@@ -82,14 +99,22 @@ def main():
     lightning_active_2 = 0 #initialize to no active lightning
     airport_1 = 'KOJC' #specify first airport to check
     airport_2 = 'KIXD' #specify second airport to check
+    wdt = WDT(timeout=8388)
+    wdt.feed()
+    led = Pin("LED", Pin.OUT)
+    flash = Pin(0, Pin.OUT)
+    led.value(1)
+    connect(flash)
     
     while True: #main program loop
+        wdt.feed()
+        if network.WLAN(network.STA_IF).isconnected() == False:
+            machine.reset()
         t = time.gmtime() #get current UTC time
         current_time = time.strftime("%H%M", t) #convert current UTC time to HHMM format
-        
         metar_data_1 = fetch_metar(airport_1) #get METAR for first airport
         metar_data_2 = fetch_metar(airport_2) #get METAR for second airport
-        
+
         if metar_data_1: #check if METAR for first airport has contents
             report_time_1 = metar_data_1[7:11] #decode UTC time for report
             (lightning_active_1, last_lightning_time_1) = generate_alert(metar_data_1,last_lightning_time_1, current_time) #determine if an alert should be generated based on first airport 
@@ -118,9 +143,16 @@ def main():
         else:
             lightning_alert = 0
 
-        
+        flash.value(lightning_alert)
         print('Refreshing in 1 minute...')
-        time.sleep(60)  # Sleep for 60 sec
+        for x in range(11): # run through 12 times (12x5=60 total wait time)
+            wdt.feed() # RP2040 has WDT limit of 8388ms for timeout, so need to use a for loop to let it go 60 seconds with intermediate pets
+            print(x+1)
+            time.sleep(5)  # sleep for 5 sec
+            
+            
+    
     
 if __name__ == "__main__":
     main()
+
