@@ -7,8 +7,8 @@ import time
 import datetime
 
 
-ssid = 'VandelayIndustries'
-password = 'SummerOfGeorge'
+ssid = 'ENTER SSID HERE'
+password = 'ENTER PW HERE'
 
 def connect(indicator):
     count = 0
