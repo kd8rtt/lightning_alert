@@ -16,9 +16,13 @@ def connect(indicator):
     wlan.active(True)
     wlan.connect(ssid, password)
     while wlan.isconnected() == False: # while trying to connect to Wi-Fi, flash the light
+        count = count + 1
         print('Waiting for connection...')
         time.sleep(1)
         indicator.value(1)
+        wdt.feed()
+        if count > 29:
+            machine.reset()
     indicator.value(0)
     print(wlan.ifconfig())  
 
@@ -108,12 +112,13 @@ def main():
     
     while True: #main program loop
         wdt.feed()
-        if network.WLAN(network.STA_IF).isconnected() == False:
-            machine.reset()
         t = time.gmtime() #get current UTC time
         current_time = time.strftime("%H%M", t) #convert current UTC time to HHMM format
+        wdt.feed()
         metar_data_1 = fetch_metar(airport_1) #get METAR for first airport
+        wdt.feed()
         metar_data_2 = fetch_metar(airport_2) #get METAR for second airport
+        wdt.feed()
 
         if metar_data_1: #check if METAR for first airport has contents
             report_time_1 = metar_data_1[7:11] #decode UTC time for report
