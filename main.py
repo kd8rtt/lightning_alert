@@ -7,8 +7,8 @@ import time
 import datetime
 
 
-ssid = 'ENTER SSID HERE'
-password = 'ENTER PW HERE'
+ssid = 'ENTER SSID'
+password = 'ENTER PW'
 
 def connect(indicator):
     count = 0
@@ -107,6 +107,8 @@ def main():
     wdt.feed()
     led = Pin("LED", Pin.OUT)
     flash = Pin(0, Pin.OUT)
+    run_led = Pin(15, Pin.OUT)
+    run_led.value(1)
     led.value(1)
     connect(flash)
     
