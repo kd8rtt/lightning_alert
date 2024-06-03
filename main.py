@@ -10,7 +10,7 @@ import datetime
 ssid = 'ENTER SSID'
 password = 'ENTER PW'
 
-def connect(indicator):
+def connect(indicator, watchdog):
     count = 0
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
@@ -20,7 +20,7 @@ def connect(indicator):
         print('Waiting for connection...')
         time.sleep(1)
         indicator.value(1)
-        wdt.feed()
+        watchdog.feed()
         if count > 29:
             machine.reset()
     indicator.value(0)
@@ -110,7 +110,7 @@ def main():
     run_led = Pin(15, Pin.OUT)
     run_led.value(1)
     led.value(1)
-    connect(flash)
+    connect(flash, wdt)
     
     while True: #main program loop
         wdt.feed()
@@ -162,4 +162,5 @@ def main():
     
 if __name__ == "__main__":
     main()
+
 
